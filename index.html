@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field to Account Coordinator</title>
+    <style>
+        #dropZone {
+            border: 2px dashed #cccccc;
+            padding: 20px;
+            text-align: center;
+            color: #cccccc;
+            margin-bottom: 20px;
+        }
+        #dropZone.dragover {
+            background-color: #e6f7ff;
+            border-color: #0088cc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Submit Error Report</h1>
+    <form id="errorForm">
+        <label for="builder">Builder:</label>
+        <input type="text" id="builder" name="builder" required><br><br>
+
+        <label for="planName">Plan Name:</label>
+        <input type="text" id="planName" name="planName" required><br><br>
+
+        <label for="elevation">Elevation:</label>
+        <input type="text" id="elevation" name="elevation" required><br><br>
+
+        <label for="materialType">Material Type:</label>
+        <input type="text" id="materialType" name="materialType" required><br><br>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required><br><br>
+
+        <label for="estimator">Estimator:</label>
+        <input type="text" id="estimator" name="estimator" required><br><br>
+
+        <label for="errorDescription">Error Description:</label>
+        <textarea id="errorDescription" name="errorDescription" required></textarea><br><br>
+
+        <!-- Drag-and-drop area -->
+        <div id="dropZone">Drag and drop Excel file here, or click below to populate form</div>
+
+        <!-- Regular file input for selecting Excel file -->
+        <label for="excelFile">Upload Excel File:</label>
+        <input type="file" id="excelFile" accept=".xlsx, .xls" /><br><br>
+
+        <button type="submit">Submit Error Report</button>
+    </form>
+
+    <p id="statusMessage"></p>
+
+    <script src="app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+</body>
+</html>
