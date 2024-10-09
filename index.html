@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field to Account Coordinator</title>
+    <title>Lift Off Issue Form</title>
     <style>
         #dropZone {
             border: 2px dashed #cccccc;
@@ -21,33 +21,45 @@
 <body>
     <h1>Submit Error Report</h1>
     <form id="errorForm">
-        <label for="builder">Builder:</label>
-        <input type="text" id="builder" name="builder" required><br><br>
+        <!-- Vanir Office Dropdown (Required) -->
+        <label for="vanirOffice">Select Vanir Office:</label>
+        <select id="vanirOffice" name="vanirOffice" required>
+            <option value="" disabled selected>Select an office</option>
+            <option value="Raleigh">Raleigh</option>
+            <option value="Charlotte">Charlotte</option>
+            <option value="Charleston">Charleston</option>
+            <option value="Wilmington">Wilmington</option>
+            <option value="Corporate">Corporate</option>
+            <option value="Myrtle Beach">Myrtle Beach</option>
+            <option value="Greensboro">Greensboro</option>
+            <option value="Greenville,SC">Greenville, SC</option>
+            <option value="Columbia">Columbia</option>
+            <option value="Test Branch">Test Branch</option>
+            <option value="Nashville">Nashville</option>
+            <option value="Savannah">Savannah</option>
+        </select> <br><br>
 
-        <label for="planName">Plan Name:</label>
-        <input type="text" id="planName" name="planName" required><br><br>
+        <!-- Submitted by Dropdown -->
+        <label for="submittedBy">Submitted by:</label>
+        <select id="submittedBy" name="submittedBy" required>
+            <option value="" disabled selected>Select your name</option>
+        </select><br><br>
 
-        <label for="elevation">Elevation:</label>
-        <input type="text" id="elevation" name="elevation" required><br><br>
+        <!-- Issue Type Dropdown -->
+        <label for="IssueType">Issue Type</label>
+        <select id="issueType" name="issueType" required>
+            <option value="" disabled selected>Select the issue type</option>
+        </select><br><br>
 
-        <label for="materialType">Material Type:</label>
-        <input type="text" id="materialType" name="materialType" required><br><br>
-
-        <label for="date">Date:</label>
-        <input type="date" id="date" name="date" required><br><br>
-
-        <label for="estimator">Estimator:</label>
-        <input type="text" id="estimator" name="estimator" required><br><br>
-
-        <label for="errorDescription">Error Description:</label>
-        <textarea id="errorDescription" name="errorDescription" required></textarea><br><br>
+        <label for="IssueDescription">Error Description:</label>
+        <textarea id="IssueDescription" name="IssueDescription" required></textarea><br><br>
 
         <!-- Drag-and-drop area -->
-        <div id="dropZone">Drag and drop Excel file here, or click below to populate form</div>
+        <div id="dropZone">Drag and drop screenshot here</div>
 
-        <!-- Regular file input for selecting Excel file -->
-        <label for="excelFile">Upload Excel File:</label>
-        <input type="file" id="excelFile" accept=".xlsx, .xls" /><br><br>
+        <!-- Regular file input for selecting a screenshot -->
+        <label for="screenshotFile">Upload Screenshot:</label>
+        <input type="file" id="screenshotFile" accept="image/png, image/jpeg" /><br><br>
 
         <button type="submit">Submit Error Report</button>
     </form>
