@@ -1,14 +1,28 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const vanirOfficeSelect = document.getElementById('vanirOffice');
     const submittedBySelect = document.getElementById('submittedBy');
+    const issueDescriptionTextarea = document.getElementById('IssueDescription'); 
+
     const issueTypeSelect = document.getElementById('issueType'); // Add issue type dropdown element
     const airtableApiKey = 'patxrKdNvMqOO43x4.274bd66bb800bb57cd8b22fe56831958ac0e8d79666cc5e4496013246c33a2f3';
-    const baseId = 'appgX5NR5p1apwf7N';
-    const tableId = 'tblLLrBKn5SOoVUNk'; // Table for fetching Full Name, Vanir Office, and Issue Type
+    const baseId = 'appgX5NR5p1apwf7N'; // Base ID for both tables
+    const tableId1 = 'tblSoqIU5apC8PVtM'; // Table for Full Name, Vanir Office
+    const tableId2 = 'tblLLrBKn5SOoVUNk'; 
 
-    // Function to fetch records from Airtable
-    const fetchAirtableRecords = async () => {
-        const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableId}`, {
+    // Function to fetch records from the first Airtable table (for Full Name and Vanir Office)
+    const fetchAirtableRecords1 = async () => {
+        const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableId1}`, {
+            headers: {
+                Authorization: `Bearer ${airtableApiKey}`
+            }
+        });
+        const data = await response.json();
+        return data.records;
+    };
+
+    // Function to fetch records from the second Airtable table (for Issue Type)
+    const fetchAirtableRecords2 = async () => {
+        const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableId2}`, {
             headers: {
                 Authorization: `Bearer ${airtableApiKey}`
             }
@@ -70,23 +84,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Fetch records from Airtable on page load
-    const records = await fetchAirtableRecords();
+    // Fetch records from both Airtable tables on page load
+    const records1 = await fetchAirtableRecords1(); // Fetch Full Name and Vanir Office records
+    const records2 = await fetchAirtableRecords2(); // Fetch Issue Type records
 
     // Check if there is a saved Vanir Office in localStorage and set it
     const savedVanirOffice = localStorage.getItem('vanirOffice');
     if (savedVanirOffice) {
         vanirOfficeSelect.value = savedVanirOffice;
-        filterSubmittedBy(records, savedVanirOffice); // Populate submittedBy dropdown based on saved office
+        filterSubmittedBy(records1, savedVanirOffice); // Populate submittedBy dropdown based on saved office
     }
 
     // Populate Issue Types on page load
-    populateIssueTypes(records);
+    populateIssueTypes(records2);
 
     // Add event listener to Vanir Office dropdown
     vanirOfficeSelect.addEventListener('change', (event) => {
         const selectedOffice = event.target.value;
-        filterSubmittedBy(records, selectedOffice);
+        filterSubmittedBy(records1, selectedOffice);
 
         // Store the selected Vanir Office in localStorage
         localStorage.setItem('vanirOffice', selectedOffice);
@@ -107,4 +122,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Store the selected Issue Type in localStorage
         localStorage.setItem('issueType', selectedIssueType);
     });
+ // Function to send data to Airtable when "Submit Error Report" is clicked
+ const submitErrorReport = async () => {
+    const selectedVanirOffice = vanirOfficeSelect.value;
+    const selectedSubmittedBy = submittedBySelect.value;
+    const selectedIssueType = issueTypeSelect.value;
+    const issueDescription = issueDescriptionTextarea.value; // Get the issue description
+
+    // Log the selected values
+    console.log('Selected Vanir Office:', selectedVanirOffice);
+    console.log('Selected Submitted By:', selectedSubmittedBy);
+    console.log('Selected Issue Type:', selectedIssueType);
+    console.log('Issue Description:', issueDescription);
+
+    // Data to be sent to Airtable
+    const data = {
+        fields: {
+            "Vanir Office": selectedVanirOffice,
+            "Submitted By": selectedSubmittedBy,
+            "Issue Type": selectedIssueType,
+            "Issue Description": issueDescription // Add Issue Description to the data
+        }
+    };
+
+    // Log the data being sent
+    console.log('Data to be sent:', data);
+
+    try {
+        // Sending data to Airtable
+        const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableId2}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${airtableApiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        // Log the response status
+        console.log('Response status:', response.status);
+
+        if (response.ok) {
+            alert("Error report submitted successfully!");
+        } else {
+            alert("Error submitting report. Please try again.");
+        }
+    } catch (error) {
+        // Log any errors that occur during the fetch
+        console.error('Error submitting report:', error);
+        alert("An error occurred while submitting the report. Please try again.");
+    }
+};
+
+// Add event listener to the submit button
+const submitButton = document.getElementById('submitErrorReport');
+submitButton.addEventListener('click', (event) => {
+    event.preventDefault(); // Prevent default form submission behavior
+    submitErrorReport(); // Call the function to submit the data
+});
+
 });
