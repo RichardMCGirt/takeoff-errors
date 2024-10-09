@@ -1,149 +1,110 @@
-// Your Airtable API settings
-const AIRTABLE_API_KEY = 'patxrKdNvMqOO43x4.274bd66bb800bb57cd8b22fe56831958ac0e8d79666cc5e4496013246c33a2f3';
-const BASE_ID = 'appgX5NR5p1apwf7N';
-const TABLE_ID = 'tblLLrBKn5SOoVUNk';  // For the main table
+document.addEventListener('DOMContentLoaded', async () => {
+    const vanirOfficeSelect = document.getElementById('vanirOffice');
+    const submittedBySelect = document.getElementById('submittedBy');
+    const issueTypeSelect = document.getElementById('issueType'); // Add issue type dropdown element
+    const airtableApiKey = 'patxrKdNvMqOO43x4.274bd66bb800bb57cd8b22fe56831958ac0e8d79666cc5e4496013246c33a2f3';
+    const baseId = 'appgX5NR5p1apwf7N';
+    const tableId = 'tblLLrBKn5SOoVUNk'; // Table for fetching Full Name, Vanir Office, and Issue Type
 
-// URL for Vanir Office (linked table)
-const AIRTABLE_URL_VANIR_OFFICE = `https://api.airtable.com/v0/${BASE_ID}/<vanirOfficeTableID>`;
-
-// URL for Submitted by (linked table)
-const AIRTABLE_URL_SUBMITTED_BY = `https://api.airtable.com/v0/${BASE_ID}/<submittedByTableID>`;
-
-// URL for submitting the form data to Airtable
-const AIRTABLE_URL = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
-
-// Headers for Airtable API
-const headers = {
-    Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-    'Content-Type': 'application/json'
-};
-
-// Function to fetch "Submitted by" from Airtable and populate the dropdown, filtered by office
-async function populateSubmittedByDropdown(selectedOffice = "") {
-    try {
-        const response = await fetch(AIRTABLE_URL_SUBMITTED_BY, { headers });
-        const data = await response.json();
-
-        const submittedByDropdown = document.getElementById('submittedBy');
-        submittedByDropdown.innerHTML = '<option value="" disabled selected>Select your name</option>';  // Reset dropdown
-
-        data.records.forEach(record => {
-            const fullName = record.fields['Full Name'];  // Adjust field name if different
-            const office = record.fields['Vanir Office']; // Assuming you have an 'Office' field in Airtable
-
-            // Only add the name if it matches the selected office or if no office is selected
-            if (selectedOffice === "" || office === selectedOffice) {
-                const option = document.createElement('option');
-                option.value = fullName;
-                option.textContent = fullName;
-                submittedByDropdown.appendChild(option);
+    // Function to fetch records from Airtable
+    const fetchAirtableRecords = async () => {
+        const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableId}`, {
+            headers: {
+                Authorization: `Bearer ${airtableApiKey}`
             }
         });
-    } catch (error) {
-        console.error('Error fetching data from Airtable:', error);
-    }
-}
-
-// Function to fetch "Issue Type" from Airtable and populate the dropdown (without duplicates)
-async function populateIssueTypeDropdown() {
-    try {
-        const response = await fetch(AIRTABLE_URL, { headers });
         const data = await response.json();
+        return data.records;
+    };
 
-        const issueTypeDropdown = document.getElementById('issueType');
-        const uniqueIssueTypes = new Set();  // Use a Set to track unique Issue Types
-        
-        // Iterate over the records and add unique "Issue Type" values to the dropdown
-        data.records.forEach(record => {
-            const issueType = record.fields['Issue Type'];  // Adjust the field name if different
-            if (issueType && !uniqueIssueTypes.has(issueType)) {
-                uniqueIssueTypes.add(issueType);  // Add to Set to ensure uniqueness
-                const option = document.createElement('option');
-                option.value = issueType;
-                option.textContent = issueType;
-                issueTypeDropdown.appendChild(option);
-            }
+    // Function to populate the submittedBy dropdown based on Vanir Office selection
+    const filterSubmittedBy = (records, selectedOffice) => {
+        // Clear existing options in the submittedBy dropdown
+        submittedBySelect.innerHTML = '';
+
+        // Filter records based on the selected Vanir Office
+        const filteredRecords = records.filter(record => record.fields['Vanir Office'] === selectedOffice);
+
+        // Create and append options for each filtered record
+        filteredRecords.forEach(record => {
+            const option = document.createElement('option');
+            option.value = record.fields['Full Name'];
+            option.textContent = record.fields['Full Name'];
+            submittedBySelect.appendChild(option);
         });
-    } catch (error) {
-        console.error('Error fetching data from Airtable:', error);
-    }
-}
 
-// Function to submit form data to Airtable
-async function submitFormData(formData) {
-    // Fetch the record IDs for 'Vanir Office' and 'Submitted by'
-    const vanirOfficeId = await getRecordIdForField(formData.get('vanirOffice'), AIRTABLE_URL_VANIR_OFFICE, 'Office Name');  // Fetch the record ID for 'Vanir Office'
-    const submittedById = await getRecordIdForField(formData.get('submittedBy'), AIRTABLE_URL_SUBMITTED_BY, 'Full Name');  // Fetch the record ID for 'Submitted by'
-
-    // If either ID is not found, show an error message
-    if (!vanirOfficeId || !submittedById) {
-        console.error('Error: Unable to find record IDs for selected fields');
-        document.getElementById('statusMessage').textContent = 'Error: Unable to find record IDs for selected fields';
-        return;
-    }
-
-    const payload = {
-        fields: {
-            'Vanir Office': [vanirOfficeId],  // Must be an array of record IDs for linked records
-            'Submitted By': [submittedById],  // Must be an array of record IDs for linked records
-            'Issue Type': formData.get('issueType'),  // Assuming this is a single select field
-            'Error Description': formData.get('IssueDescription'),  // Assuming this is a text field
+        // Check if there is a saved submittedBy in localStorage and set it
+        const savedSubmittedBy = localStorage.getItem('submittedBy');
+        if (savedSubmittedBy) {
+            submittedBySelect.value = savedSubmittedBy;
         }
     };
 
-    console.log(payload);  // Log the payload to ensure correctness
+    // Function to populate the issueType dropdown with distinct Issue Types
+    const populateIssueTypes = (records) => {
+        // Clear existing options in the issueType dropdown
+        issueTypeSelect.innerHTML = '';
 
-    try {
-        const response = await fetch(AIRTABLE_URL, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(payload),
+        // Create a Set to store unique Issue Types
+        const issueTypes = new Set();
+
+        // Extract unique Issue Types from records
+        records.forEach(record => {
+            if (record.fields['Issue Type']) {
+                issueTypes.add(record.fields['Issue Type']);
+            }
         });
 
-        if (response.ok) {
-            document.getElementById('statusMessage').textContent = 'Error report submitted successfully!';
-        } else {
-            const errorData = await response.json();
-            console.error('Error:', errorData);
-            document.getElementById('statusMessage').textContent = 'Error submitting report. Please try again.';
+        // Create and append options for each unique Issue Type
+        issueTypes.forEach(issueType => {
+            const option = document.createElement('option');
+            option.value = issueType;
+            option.textContent = issueType;
+            issueTypeSelect.appendChild(option);
+        });
+
+        // Check if there is a saved issueType in localStorage and set it
+        const savedIssueType = localStorage.getItem('issueType');
+        if (savedIssueType) {
+            issueTypeSelect.value = savedIssueType;
         }
-    } catch (error) {
-        document.getElementById('statusMessage').textContent = 'Error submitting report. Please try again.';
-        console.error('Error submitting form data:', error);
+    };
+
+    // Fetch records from Airtable on page load
+    const records = await fetchAirtableRecords();
+
+    // Check if there is a saved Vanir Office in localStorage and set it
+    const savedVanirOffice = localStorage.getItem('vanirOffice');
+    if (savedVanirOffice) {
+        vanirOfficeSelect.value = savedVanirOffice;
+        filterSubmittedBy(records, savedVanirOffice); // Populate submittedBy dropdown based on saved office
     }
-}
 
-// Helper function to get the record ID based on a field value (e.g., name)
-async function getRecordIdForField(value, airtableUrl, fieldName) {
-    const response = await fetch(airtableUrl, { headers });
-    const data = await response.json();
+    // Populate Issue Types on page load
+    populateIssueTypes(records);
 
-    // Find the record with the matching field value (e.g., 'Office Name' or 'Full Name')
-    const record = data.records.find(record => record.fields[fieldName] === value);
-    return record ? record.id : null;  // Return the record ID or null if not found
-}
+    // Add event listener to Vanir Office dropdown
+    vanirOfficeSelect.addEventListener('change', (event) => {
+        const selectedOffice = event.target.value;
+        filterSubmittedBy(records, selectedOffice);
 
+        // Store the selected Vanir Office in localStorage
+        localStorage.setItem('vanirOffice', selectedOffice);
+    });
 
+    // Add event listener to Submitted By dropdown to store the selected value
+    submittedBySelect.addEventListener('change', (event) => {
+        const selectedSubmittedBy = event.target.value;
 
+        // Store the selected Submitted By in localStorage
+        localStorage.setItem('submittedBy', selectedSubmittedBy);
+    });
 
+    // Add event listener to Issue Type dropdown to store the selected value
+    issueTypeSelect.addEventListener('change', (event) => {
+        const selectedIssueType = event.target.value;
 
-// Event listener for form submission
-document.getElementById('errorForm').addEventListener('submit', function(event) {
-    event.preventDefault();  // Prevent the default form submission behavior
-
-    const formData = new FormData(event.target);  // Get form data
-
-    submitFormData(formData);  // Submit form data to Airtable
+        // Store the selected Issue Type in localStorage
+        localStorage.setItem('issueType', selectedIssueType);
+    });
 });
-
-// Event listener for Vanir Office dropdown to filter the "Submitted by" dropdown
-document.getElementById('vanirOffice').addEventListener('change', function() {
-    const selectedOffice = this.value;
-    populateSubmittedByDropdown(selectedOffice);  // Filter the submitted by dropdown based on selected office
-});
-
-// Call the functions when the page loads to populate the dropdowns
-window.onload = function() {
-    populateSubmittedByDropdown();  // Populate without filtering initially
-    populateIssueTypeDropdown();
-};
